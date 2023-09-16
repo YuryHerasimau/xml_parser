@@ -5,46 +5,97 @@ except ImportError:
 import os
 
 
-def get_total_stats(file: str):
-    try:
-        tree = ET.parse(file)
-        root = tree.getroot()
+def get_total_images(xml_path: str):
+    tree = ET.parse(xml_path)
+    root = tree.getroot()
+    return len(root.findall('image'))
 
-        marked_counter, unmarked_counter, number_of_figures = 0,0,0
-        figures = ("box", "polygon", "point")
 
-        for elem in root.findall('image'):
-            # Все "соседние" узлы, которые являются первым нижестоящим элементом их родителя
-            if (elem.find(f'.//{figures[0]}') is not None
-            or elem.find(f'.//{figures[1]}') is not None
-            or elem.find(f'.//{figures[2]}') is not None):
-                marked_counter += 1
-            else:
-                unmarked_counter += 1
+def get_labeled_images(xml_path: str):
+    tree = ET.parse(xml_path)
+    root = tree.getroot()
+    labeled_images = 0
 
-        for elem in tree.iter():
-            if elem.tag in figures:
-                number_of_figures += 1
+    for image in root.findall('image'):
+        if len(image.findall('*')) > 0:
+            labeled_images += 1
 
-        width_list, height_list = [],[]
+    return labeled_images
+
+
+def get_unlabeled_images(xml_path: str):
+    total_images = get_total_images(xml_path)
+    labeled_images = get_labeled_images(xml_path)
+    return total_images - labeled_images
+
+
+def get_total_figures(xml_path: str):
+    tree = ET.parse(xml_path)
+    root = tree.getroot()
+    total_figures = 0
+
+    for image in root.findall('image'):
+        total_figures += len(image.findall('*'))
         
-        for elem in root.findall('image'):
-            width_list.append(int(elem.attrib['width'].strip()))
-            height_list.append(int(elem.attrib['height'].strip()))
+    return total_figures
 
-        return f"Всего изображений: {marked_counter + unmarked_counter} \
-                \nВсего изображений размечено: {marked_counter} \
-                \nВсего изображений неразмечено: {unmarked_counter} \
-                \nВсего фигур: {number_of_figures} \
-                \nСамое большое изображение: width={max(width_list)}, height={max(height_list)} \
-                \nСамое маленькое изображение: width={min(width_list)}, height={min(height_list)}"
-    
-    except Exception as ex:
-        print('Exception :', ex)
+
+def get_figure_statistics(xml_path: str):
+    tree = ET.parse(xml_path)
+    root = tree.getroot()
+
+    figure_statistics = {}
+    for image in root.findall('image'):
+        for figure in image.findall('*'):
+            figure_label = figure.tag
+            if figure_label not in figure_statistics:
+                figure_statistics[figure_label] = 0
+            figure_statistics[figure_label] += 1
+
+    return figure_statistics
+
+
+def get_image_statistics(xml_path: str):
+    tree = ET.parse(xml_path)
+    root = tree.getroot()
+
+    image_statistics = {}
+    for image in root.findall('image'):
+        image_id = image.get('id')
+        image_width = int(image.get('width'))
+        image_height = int(image.get('height'))
+        image_statistics[image_id] = {'width': image_width, 'height': image_height}
+
+    return image_statistics
+
+
+def get_max_min_image(xml_path: str):
+    image_statistics = get_image_statistics(xml_path)
+
+    max_width = max(image['width'] for image in image_statistics.values())
+    max_height = max(image['height'] for image in image_statistics.values())
+    min_width = min(image['width'] for image in image_statistics.values())
+    min_height = min(image['height'] for image in image_statistics.values())
+
+    max_images = sum(1 for image in image_statistics.values() if image['width'] == max_width and image['height'] == max_height)
+    min_images = sum(1 for image in image_statistics.values() if image['width'] == min_width and image['height'] == min_height)
+
+    return max_width, max_height, min_width, min_height, max_images, min_images 
 
 
 if __name__ == '__main__':
     dir = 'files'
-    for file in os.listdir(dir):
-        print(f"==========TOTAL STATS BY {file}==========")
-        print(get_total_stats(f'{dir}/{file}'))
+    xml_files = [file for file in os.listdir(dir) if file.endswith('.xml')]
+    for xml_file in os.listdir(dir):
+        xml_path = os.path.join(dir, xml_file)
+        print(f"==========TOTAL STATS BY {xml_file}==========")
+        print("Total Images:", get_total_images(xml_path))
+        print("Labeled Images:", get_labeled_images(xml_path))
+        print("Unlabeled Images:", get_unlabeled_images(xml_path))
+        print("Total Figures:", get_total_figures(xml_path))
+        print("Figure Statistics:", get_figure_statistics(xml_path))
+        max_width, max_height, min_width, min_height, max_images, min_images = get_max_min_image(xml_path)
+        print("Max Image Size:", max_width, "x", max_height)
+        print("Min Image Size:", min_width, "x", min_height)
+        print("Number of Max Images:", max_images)
+        print("Number of Min Images:", min_images)

@@ -5,29 +5,24 @@ except ImportError:
 import os
 
 
-def get_stats_by_class(file: str):
-    tree = ET.parse(file)
+def get_stats_by_class(xml_path: str):
+    tree = ET.parse(xml_path)
     root = tree.getroot()
 
-    ignore_counter, fur_counter, item_counter = 0,0,0
-    classes = ("ignore", "fur", "item")
-    figures = ("box", "polygon", "point")
-             
-    for elem in root.iter('polygon'):
-        if elem.attrib.get('label') == f'{classes[0]}':
-            ignore_counter += 1
-        elif elem.attrib.get('label') == f'{classes[1]}':
-            fur_counter += 1
-        elif elem.attrib.get('label') == f'{classes[2]}':
-            item_counter += 1
+    class_statistics = {}
+    for image in root.findall('image'):
+        for figure in image.findall('*'):
+            figure_label = figure.get('label')
+            if figure_label not in class_statistics:
+                class_statistics[figure_label] = 0
+            class_statistics[figure_label] += 1
 
-    return f"Класс {classes[0]}: {ignore_counter} фигур  \
-            \nКласс {classes[1]}: {fur_counter} фигур \
-            \nКласс {classes[2]}: {item_counter} фигур "
+    return class_statistics
 
 
 if __name__ == '__main__':
     dir = 'files'
-    for file in os.listdir(dir):
-        print(f"==========STATS BY CLASSES BY {file}==========")
-        print(get_stats_by_class(f'{dir}/{file}'))
+    xml_files = [file for file in os.listdir(dir) if file.endswith('.xml')]
+    for xml_file in xml_files:
+        xml_path = os.path.join(dir, xml_file)
+        print(f"Class Statistics by {xml_file}:\n", get_stats_by_class(xml_path))

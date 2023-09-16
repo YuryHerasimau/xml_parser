@@ -5,9 +5,10 @@ except ImportError:
 import os
 
 
-def get_stats_by_figure(file: str):
-    tree = ET.parse(file)
+def get_figure_statistics(xml_path: str):
+    tree = ET.parse(xml_path)
     root = tree.getroot()
+
     figure_statistics = {}
     for image in root.findall('image'):
         for figure in image.findall('*'):
@@ -21,6 +22,7 @@ def get_stats_by_figure(file: str):
 
 if __name__ == '__main__':
     dir = 'files'
-    for file in os.listdir(dir):
-        print(f"==========FIGURE STATS BY {file}==========")
-        print("Figure Statistics:", get_stats_by_figure(f'{dir}/{file}'))
+    xml_files = [file for file in os.listdir(dir) if file.endswith('.xml')]
+    for xml_file in xml_files:
+        xml_path = os.path.join(dir, xml_file)
+        print(f"Figure Statistics by {xml_file}:\n", get_figure_statistics(xml_path))
