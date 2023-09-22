@@ -59,28 +59,17 @@ def get_image_statistics(xml_path: str):
     tree = ET.parse(xml_path)
     root = tree.getroot()
 
-    image_statistics = {}
+    image_sizes = []
     for image in root.findall('image'):
-        image_id = image.get('id')
-        image_width = int(image.get('width'))
-        image_height = int(image.get('height'))
-        image_statistics[image_id] = {'width': image_width, 'height': image_height}
+        name = image.get('name')
+        width = int(image.get('width'))
+        height = int(image.get('height'))
+        area = width * height
+        image_sizes.append((name, width, height, area))        
+        max_size = max(image_sizes, key=lambda x: x[3])
+        min_size = min(image_sizes, key=lambda x: x[3])
 
-    return image_statistics
-
-
-def get_max_min_image(xml_path: str):
-    image_statistics = get_image_statistics(xml_path)
-
-    max_width = max(image['width'] for image in image_statistics.values())
-    max_height = max(image['height'] for image in image_statistics.values())
-    min_width = min(image['width'] for image in image_statistics.values())
-    min_height = min(image['height'] for image in image_statistics.values())
-
-    max_images = sum(1 for image in image_statistics.values() if image['width'] == max_width and image['height'] == max_height)
-    min_images = sum(1 for image in image_statistics.values() if image['width'] == min_width and image['height'] == min_height)
-
-    return max_width, max_height, min_width, min_height, max_images, min_images 
+    return max_size, min_size
 
 
 if __name__ == '__main__':
@@ -94,8 +83,6 @@ if __name__ == '__main__':
         print("Unlabeled Images:", get_unlabeled_images(xml_path))
         print("Total Figures:", get_total_figures(xml_path))
         print("Figure Statistics:", get_figure_statistics(xml_path))
-        max_width, max_height, min_width, min_height, max_images, min_images = get_max_min_image(xml_path)
-        print("Max Image Size:", max_width, "x", max_height)
-        print("Min Image Size:", min_width, "x", min_height)
-        print("Number of Max Images:", max_images)
-        print("Number of Min Images:", min_images)
+        max_size, min_size = get_image_statistics(xml_path)
+        print("Max Image Name:", max_size[0], "\nMax Image Size:", max_size[1], "x", max_size[2])
+        print("Min Image Name:", min_size[0], "\nMin Image Size:", min_size[1], "x", min_size[2])

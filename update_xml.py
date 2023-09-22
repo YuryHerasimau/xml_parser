@@ -16,17 +16,15 @@ for xml_file in xml_files:
         tree = ET.parse(xml_path)
         root = tree.getroot()
 
-        # # Изменение id изображений в обратном порядке
-        images = root.findall('image')
-        for i in range(len(images)):
-            images[i].attrib['id'] = str(len(images) - i)
-
-        # Изменение name изображений - замена расширения на 'png' и удаление пути к файлу
-        for image in images:
-            name = image.attrib['name']
-            name = name.split('/')[-1]              # Получение только названия файла
-            name = name.split('.')[0] + '.png'      # Замена расширения на 'png'
-            image.attrib['name'] = name
+        for image in root.findall('image'):
+            # Изменение id изображений в обратном порядке
+            image_id = image.get('id')
+            image.set('id', image_id[::-1])
+            # Изменение name изображений - замена расширения на 'png' и удаление пути к файлу
+            image_name = image.get('name')
+            image_name = image_name.split('/')[-1]              # Получение только названия файла
+            image_name = image_name.split('.')[0] + '.png'      # Замена расширения на 'png'
+            image.set('name', image_name)
 
         # Создание нового XML файла с изменениями
         new_xml_path = os.path.join(dir, 'new_' + xml_file)
