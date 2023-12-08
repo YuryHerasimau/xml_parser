@@ -19,7 +19,8 @@ For example:
 > class 1: 100 figures (boxing, polygon, etc. - all together)
 > class 2: 200 figures (boxing, polygon, etc. - all together)
 
-5. Number of digits (total)
+5. Number of figures (total)
+
 5*. Statistics on figures:
 
 For example:
